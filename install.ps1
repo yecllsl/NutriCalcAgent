@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  NutriCalcAgent v0.1.0 安装向导" -ForegroundColor Cyan
+Write-Host "  NutriCalcAgent v0.1.1 安装向导" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

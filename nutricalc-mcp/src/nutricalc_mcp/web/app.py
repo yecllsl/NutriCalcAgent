@@ -35,7 +35,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="NutriCalcAgent 营养师",
         description="本地优先、隐私保护的中文营养师 Agent 可视化应用",
-        version="0.1.0",
+        version="0.1.1",
     )
 
     # 挂载静态文件（JS库、CSS）

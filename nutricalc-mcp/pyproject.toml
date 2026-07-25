@@ -1,6 +1,6 @@
 [project]
 name = "nutricalc-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "本地优先、隐私保护、AI驱动的中文营养师 Agent MCP Server"
 requires-python = ">=3.12"
 dependencies = [

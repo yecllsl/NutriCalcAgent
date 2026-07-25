@@ -80,7 +80,7 @@ def _build_json_export(logs: list, profile: dict) -> dict:
         "export_meta": {
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "app": "NutriCalcAgent",
-            "version": "0.1.0",
+            "version": "0.1.1",
             "log_count": len(logs),
             "note": "本数据由本地营养师 Agent 导出，仅供个人备份与分析",
         },
