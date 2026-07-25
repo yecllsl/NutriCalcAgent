@@ -1,0 +1,125 @@
+{# partials/stats.html — 统计图表页片段 #}
+<div>
+    {% if summary.log_count == 0 %}
+    <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">还没有饮食数据可以统计</div>
+        <div class="empty-hint">
+            <button class="btn btn-primary" hx-get="/partials/logs" hx-target="#content" hx-swap="innerHTML">
+                去记录第一餐
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <!-- 总览 KPI -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">总记录数</div>
+            <div class="kpi-value">{{ summary.log_count or 0 }}</div>
+        </div>
+        <div class="kpi-card week-new">
+            <div class="kpi-label">总能量</div>
+            <div class="kpi-value">{{ summary.total_calories or 0 }}</div>
+            <div class="kpi-unit">kcal</div>
+        </div>
+        <div class="kpi-card week-done">
+            <div class="kpi-label">日均能量</div>
+            <div class="kpi-value">{{ summary.avg_daily_calories or 0 }}</div>
+            <div class="kpi-unit">kcal/天</div>
+        </div>
+        <div class="kpi-card review-pending">
+            <div class="kpi-label">食物种类</div>
+            <div class="kpi-value">{{ summary.food_variety or 0 }}</div>
+            <div class="kpi-unit">种</div>
+        </div>
+    </div>
+
+    <!-- 图表网格 -->
+    <div class="chart-grid">
+        <!-- 能量趋势 -->
+        <div class="chart-container">
+            <div class="chart-title">30 天能量摄入趋势</div>
+            <div class="chart-body" data-echart="renderEnergyTrend"
+                 data-chart-data='{{ date_stats.trends | tojson }}'></div>
+        </div>
+        <!-- 营养雷达 -->
+        <div class="chart-container">
+            <div class="chart-title">营养达成率雷达图</div>
+            <div class="chart-body" data-echart="renderRadar"
+                 data-chart-data='{{ date_stats.radar_data | tojson }}'></div>
+        </div>
+        <!-- 餐次分布 -->
+        <div class="chart-container">
+            <div class="chart-title">餐次能量分布</div>
+            <div class="chart-body" data-echart="renderMealPie"
+                 data-chart-data='{{ meal_stats["items"] | tojson }}'></div>
+        </div>
+        <!-- 食物类别分布 -->
+        <div class="chart-container">
+            <div class="chart-title">食物类别分布</div>
+            <div class="chart-body" data-echart="renderCategoryBar"
+                 data-chart-data='{{ category_stats["items"] | tojson }}'></div>
+        </div>
+    </div>
+
+    <script>
+        function renderEnergyTrend(container, data) {
+            const chart = echarts.init(container);
+            const dates = Object.keys(data).sort();
+            const values = dates.map(d => data[d]);
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '5%', right: '5%', top: '10%', bottom: '15%' },
+                xAxis: { type: 'category', data: dates, axisLabel: { rotate: 45 } },
+                yAxis: { type: 'value', name: 'kcal' },
+                series: [{ type: 'line', data: values, smooth: true,
+                    areaStyle: { opacity: 0.3 }, itemStyle: { color: '#4f46e5' } }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        function renderRadar(container, data) {
+            const chart = echarts.init(container);
+            const indicators = data.indicators || [];
+            const values = data.values || [];
+            if (indicators.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-text">暂无数据</div></div>'; return; }
+            chart.setOption({
+                tooltip: {},
+                radar: { indicator: indicators, shape: 'polygon', splitArea: { show: true } },
+                series: [{ type: 'radar', data: [{ value: values, name: '达成率%' }],
+                    areaStyle: { opacity: 0.2, color: '#4f46e5' } }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        function renderMealPie(container, data) {
+            const chart = echarts.init(container);
+            const items = Array.isArray(data) ? data : [];
+            chart.setOption({
+                tooltip: { trigger: 'item' },
+                legend: { bottom: 0 },
+                series: [{
+                    type: 'pie', radius: ['40%', '70%'],
+                    data: items.map(i => ({ name: i.name, value: i.calories || 0 })),
+                    label: { formatter: '{b}: {c} kcal' }
+                }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        function renderCategoryBar(container, data) {
+            const chart = echarts.init(container);
+            const items = Array.isArray(data) ? data : [];
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '8%', right: '5%', top: '10%', bottom: '20%' },
+                xAxis: { type: 'category', data: items.map(i => i.name), axisLabel: { rotate: 30 } },
+                yAxis: { type: 'value', name: '次数' },
+                series: [{ type: 'bar', data: items.map(i => i.count || 0),
+                    itemStyle: { color: '#16a34a' } }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+    </script>
+    {% endif %}
+</div>

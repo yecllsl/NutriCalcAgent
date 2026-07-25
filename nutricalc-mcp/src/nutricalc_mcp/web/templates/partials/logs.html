@@ -1,0 +1,74 @@
+{# partials/logs.html — 饮食记录页（录入表单 + 记录列表） #}
+<div x-data="{ itemCount: 1 }">
+    <div class="split-layout">
+        <!-- 左侧：录入表单 -->
+        <div class="card">
+            <h3 class="section-title">📝 记录一餐</h3>
+            <form hx-post="/api/logs/add" hx-target="#log-list" hx-swap="innerHTML"
+                  @htmx:after-request="if(event.detail.successful) this.reset()">
+                <div class="form-group">
+                    <label>进食时间</label>
+                    <input type="datetime-local" name="meal_time" value="{{ now }}" required>
+                </div>
+                <div class="form-group">
+                    <label>餐次</label>
+                    <select name="meal_type" required>
+                        {% for mt in options.meal_types %}
+                        <option value="{{ mt }}" {% if mt == default_meal %}selected{% endif %}>{{ mt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>食物项（名称、克数、类别、烹饪法，用逗号分隔多项）</label>
+                    <div id="food-items">
+                        <div class="food-item-row">
+                            <input type="text" name="food_names" placeholder="如：米饭,番茄炒蛋"
+                                   style="flex:2;">
+                            <input type="text" name="food_amounts" placeholder="克数,如：200,150"
+                                   style="flex:1;">
+                            <input type="text" name="food_categories" placeholder="类别(可空)"
+                                   style="flex:1;">
+                            <input type="text" name="cooking_methods" placeholder="烹饪法(可空)"
+                                   style="flex:1;">
+                        </div>
+                    </div>
+                    <div class="form-hint">多项食物用英文逗号分隔，按位置对应</div>
+                </div>
+
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea name="note" placeholder="如：少油、外食、聚餐等"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">💾 保存记录</button>
+            </form>
+        </div>
+
+        <!-- 右侧：记录列表 -->
+        <div>
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <select hx-get="/partials/logs" hx-target="#content" hx-swap="innerHTML"
+                        name="meal_type" hx-include="this">
+                    <option value="">全部餐次</option>
+                    {% for mt in options.meal_types %}
+                    <option value="{{ mt }}" {% if filters.meal_type == mt %}selected{% endif %}>{{ mt }}</option>
+                    {% endfor %}
+                </select>
+                <select hx-get="/partials/logs" hx-target="#content" hx-swap="innerHTML"
+                        name="category" hx-include="this">
+                    <option value="">全部类别</option>
+                    {% for cat in options.food_categories %}
+                    <option value="{{ cat }}" {% if filters.category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+                <span class="filter-count">共 {{ total_count }} 条记录</span>
+            </div>
+
+            <div id="log-list">
+                {% include "partials/log_list.html" %}
+            </div>
+        </div>
+    </div>
+</div>

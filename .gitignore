@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# uv
+.uv-cache/
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+.coverage.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# 临时文件（临时解压、ZIP 等）
+_tmp_*
+*.zip
+
+# 用户数据（本地存储，不入版本库）
+data/food_logs/*.json
+data/food_images/*
+!data/food_images/.gitkeep
+data/analysis_reports/*.json
+data/meal_plans/*.json
+data/user_profile/*.json
+
+# 操作系统
+.DS_Store
+Thumbs.db

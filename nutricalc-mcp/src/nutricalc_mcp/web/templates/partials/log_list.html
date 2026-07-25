@@ -1,0 +1,51 @@
+{# partials/log_list.html — 饮食记录列表片段（HTMX 交换） #}
+{% if success %}
+<div class="alert-success" hx-swap-oob="true" id="toast-trigger">
+    <script>showToast('{{ success }}', 'success');</script>
+</div>
+{% endif %}
+{% if error %}
+<div class="alert-error">
+    <script>showToast('{{ error }}', 'error');</script>
+</div>
+{% endif %}
+
+{% if logs %}
+<div class="log-list">
+    {% for fl in logs %}
+    <div class="log-card">
+        <div class="log-card-header">
+            <span class="tag tag-meal-{{ fl.meal_type }}">{{ fl.meal_type }}</span>
+            <span class="log-time">{% if fl.meal_time %}{% if fl.meal_time is string %}{{ fl.meal_time[:16].replace('T', ' ') }}{% else %}{{ fl.meal_time.strftime('%Y-%m-%d %H:%M') }}{% endif %}{% else %}未知时间{% endif %}</span>
+            {% if fl.nutrition %}
+            <span class="log-calories">{{ fl.nutrition.calories_kcal | round(0) }} kcal</span>
+            {% endif %}
+            <span class="log-actions">
+                <button class="btn btn-sm btn-danger"
+                        hx-delete="/api/logs/{{ fl.log_id }}" hx-target="#log-list" hx-swap="innerHTML"
+                        hx-confirm="确认删除这条记录？">删除</button>
+            </span>
+        </div>
+        <div class="log-items">
+            {% for item in fl['items'] %}
+            <span class="food-tag" title="{{ item.category }} | {{ item.amount_g }}g | {{ item.cooking_method or '未知烹饪法' }}">
+                {{ item.name }} {{ item.amount_g }}g
+            </span>
+            {% endfor %}
+            {% if not fl['items'] %}
+            <span class="text-muted">（无食物项）</span>
+            {% endif %}
+        </div>
+        {% if fl.note %}
+        <div class="log-note">📝 {{ fl.note }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🍽️</div>
+    <div class="empty-text">暂无饮食记录</div>
+    <div class="empty-hint">在左侧表单记录第一餐吧</div>
+</div>
+{% endif %}

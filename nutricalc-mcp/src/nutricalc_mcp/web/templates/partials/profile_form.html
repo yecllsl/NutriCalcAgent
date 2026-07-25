@@ -1,0 +1,70 @@
+{# partials/profile_form.html — 用户档案编辑表单 #}
+<div class="card">
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <h3 class="section-title">✏️ 编辑用户档案</h3>
+    <form hx-post="/api/profile/save" hx-target="#profile-area" hx-swap="innerHTML">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>年龄</label>
+                <input type="number" name="age" value="{{ profile.age }}" min="1" max="120" required>
+            </div>
+            <div class="form-group">
+                <label>性别</label>
+                <select name="gender" required>
+                    <option value="male" {% if profile.gender == 'male' %}selected{% endif %}>男</option>
+                    <option value="female" {% if profile.gender == 'female' %}selected{% endif %}>女</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>身高 (cm)</label>
+                <input type="number" name="height_cm" value="{{ profile.height_cm }}" min="50" max="250" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label>体重 (kg)</label>
+                <input type="number" name="weight_kg" value="{{ profile.weight_kg }}" min="10" max="300" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label>活动水平</label>
+                <select name="activity_level">
+                    {% for al in options.activity_levels %}
+                    <option value="{{ al }}" {% if profile.activity_level == al %}selected{% endif %}>{{ al }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>生命阶段</label>
+                <select name="life_stage">
+                    {% for ls in options.life_stages %}
+                    <option value="{{ ls }}" {% if profile.life_stage == ls %}selected{% endif %}>{{ ls }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>健康目标</label>
+                <select name="goal">
+                    {% for g in options.goals %}
+                    <option value="{{ g }}" {% if profile.goal == g %}selected{% endif %}>
+                        {{ {'maintain':'维持体重','lose':'减脂控重','gain':'增肌增重',
+                           'control_diabetes':'控糖（糖尿病）','control_hypertension':'控压（高血压）',
+                           'control_cholesterol':'降脂（高血脂）','pregnancy':'孕期','lactation':'哺乳期'}.get(g, g) }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>过敏/忌口（逗号分隔）</label>
+                <input type="text" name="allergies" value="{{ profile.allergies | join(', ') }}"
+                       placeholder="如：花生, 海鲜, 牛奶">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 保存</button>
+            <button type="button" class="btn btn-secondary"
+                    hx-get="/partials/profile" hx-target="#content" hx-swap="innerHTML">取消</button>
+        </div>
+    </form>
+</div>

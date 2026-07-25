@@ -1,0 +1,14 @@
+{# partials/profile.html — 用户档案页 #}
+<div>
+    {% if success %}
+    <script>showToast('{{ success }}', 'success');</script>
+    {% endif %}
+
+    {% if not_found %}
+    <div class="alert-warning">
+        ⚠️ 尚未设置用户档案，当前使用默认值（30岁男性/轻体力）。完善档案可获得个性化 RNI 计算与营养评估。
+    </div>
+    {% endif %}
+
+    {% include "partials/profile_view.html" %}
+</div>

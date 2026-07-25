@@ -1,0 +1,46 @@
+[project]
+name = "nutricalc-mcp"
+version = "0.1.0"
+description = "本地优先、隐私保护、AI驱动的中文营养师 Agent MCP Server"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=3.0.0",
+    "pydantic>=2.0.0",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+# OCR 引擎依赖 — paddleocr/paddlepaddle 体积大，拆为可选依赖。
+# 运行 `uv sync --extra ocr` 或 `uv pip install paddleocr paddlepaddle` 安装。
+# 未安装时 OCR 工具内部懒加载会返回友好错误提示并降级为手动输入。
+ocr = [
+    "paddleocr>=2.7.0",
+    "paddlepaddle>=2.5.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0.0",
+    "httpx>=0.27",
+    "playwright>=1.40",
+]
+
+[project.scripts]
+nutricalc-mcp = "nutricalc_mcp.server:main"
+nutricalc-web = "nutricalc_mcp.web.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# ──────────────────────────────────────────
+# Pytest 配置
+# ──────────────────────────────────────────
+[tool.pytest.ini_options]
+markers = [
+    "e2e: End-to-end tests that require Playwright and a running web server. Run with `uv run pytest -m e2e`.",
+]
+asyncio_mode = "auto"

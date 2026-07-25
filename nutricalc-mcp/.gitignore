@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# uv
+.uv-cache/
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+.coverage.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# 用户数据（本地存储，不入版本库；保留目录结构用 .gitkeep）
+data/food_logs/*.json
+data/food_images/*
+!data/food_images/.gitkeep
+data/analysis_reports/*.json
+data/meal_plans/*.json
+data/user_profile/*.json
+
+# 食物成分表数据文件较大，按需保留或忽略（默认保留 food_db 下的 JSON 数据）
+# data/food_db/*.json
+
+# 操作系统
+.DS_Store
+Thumbs.db

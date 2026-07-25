@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriCalcAgent 营养师</title>
+    <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/htmx.min.js"></script>
+    <script src="/static/alpine.min.js" defer></script>
+    <script src="/static/echarts.min.js"></script>
+</head>
+<body>
+    <!-- 顶栏导航 -->
+    <nav class="navbar">
+        <div class="navbar-brand">🥗 NutriCalcAgent</div>
+        <div class="navbar-tabs">
+            <button class="navbar-tab active" data-tab="dashboard"
+                    hx-get="/partials/dashboard" hx-target="#content" hx-swap="innerHTML">
+                概览
+            </button>
+            <button class="navbar-tab" data-tab="logs"
+                    hx-get="/partials/logs" hx-target="#content" hx-swap="innerHTML">
+                记录
+            </button>
+            <button class="navbar-tab" data-tab="stats"
+                    hx-get="/partials/stats" hx-target="#content" hx-swap="innerHTML">
+                统计
+            </button>
+            <button class="navbar-tab" data-tab="analysis"
+                    hx-get="/partials/analysis" hx-target="#content" hx-swap="innerHTML">
+                分析
+            </button>
+            <button class="navbar-tab" data-tab="profile"
+                    hx-get="/partials/profile" hx-target="#content" hx-swap="innerHTML">
+                档案
+            </button>
+        </div>
+    </nav>
+
+    <!-- 内容区：HTMX 局部交换 -->
+    <div id="content" hx-get="/partials/dashboard" hx-trigger="load" hx-swap="innerHTML">
+        <div class="empty-state">
+            <div class="empty-text">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 全局 Toast 容器 -->
+    <div id="toast-container"></div>
+
+    <script>
+        // ─────────── Tab 切换高亮 ───────────
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            const target = evt.detail.requestConfig.elt;
+            if (target.classList.contains('navbar-tab')) {
+                document.querySelectorAll('.navbar-tab').forEach(t => t.classList.remove('active'));
+                target.classList.add('active');
+            }
+        });
+
+        // ─────────── Toast 提示 ───────────
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ─────────── HTMX 错误处理 ───────────
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            showToast('请求失败，请重试', 'error');
+        });
+
+        // ─────────── ECharts 渲染辅助 ───────────
+        // 在 htmx:afterSwap 后自动初始化 [data-echart] 元素
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            const containers = evt.detail.target.querySelectorAll('[data-echart]');
+            containers.forEach(container => {
+                const chartType = container.getAttribute('data-echart');
+                const dataUrl = container.getAttribute('data-chart-url');
+                const inlineData = container.getAttribute('data-chart-data');
+                if (dataUrl) {
+                    fetch(dataUrl)
+                        .then(r => r.json())
+                        .then(data => {
+                            const fn = window[chartType];
+                            if (fn) fn(container, data);
+                        })
+                        .catch(err => {
+                            container.innerHTML = '<div class="empty-state"><div class="empty-text">图表加载失败</div></div>';
+                        });
+                } else if (inlineData) {
+                    try {
+                        const data = JSON.parse(inlineData);
+                        const fn = window[chartType];
+                        if (fn) fn(container, data);
+                    } catch (e) {
+                        console.error('图表数据解析失败', e);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

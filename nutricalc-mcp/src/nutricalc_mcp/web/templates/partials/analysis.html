@@ -1,0 +1,179 @@
+{# partials/analysis.html — 营养分析页（平衡评估 + AI 营养师建议） #}
+<div>
+    <!-- 周期切换 + 人设选择 + 提问表单 -->
+    <form class="filter-bar" hx-post="/partials/analysis" hx-target="#content" hx-swap="innerHTML">
+        <select name="period">
+            <option value="daily" {% if period == 'daily' %}selected{% endif %}>今日</option>
+            <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>本周</option>
+            <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>本月</option>
+        </select>
+        <select name="persona">
+            {% for p in options.personas %}
+            <option value="{{ p }}" {% if selected_persona == p %}selected{% endif %}>
+                {{ {'professional':'专业营养师','gentle':'温柔鼓励型','strict':'严格私教型'}.get(p, p) }}
+            </option>
+            {% endfor %}
+        </select>
+        <input type="text" name="question" placeholder="向营养师提问（可选，如：我今天能吃甜点吗？）"
+               value="{{ user_question or '' }}" style="flex:1; min-width:200px;">
+        <button type="submit" class="btn btn-primary">生成建议</button>
+    </form>
+
+    {% if advice_mode == 'chat' %}
+    <div class="alert-info">💬 对话模式：已基于你的饮食数据生成回答上下文</div>
+    {% endif %}
+
+    <!-- 平衡评估卡片 -->
+    <div class="chart-grid">
+        <div class="chart-container">
+            <div class="chart-title">
+                营养平衡评分
+                <span class="score-badge
+                    {% if assessment.balance_score >= 80 %}score-good
+                    {% elif assessment.balance_score >= 60 %}score-mid
+                    {% else %}score-bad{% endif %}">
+                    {{ assessment.balance_score | round(1) }}/100
+                </span>
+            </div>
+            <div class="chart-body" data-echart="renderBalanceGauge"
+                 data-chart-data='{{ {"score": assessment.balance_score} | tojson }}'></div>
+        </div>
+        <div class="chart-container">
+            <div class="chart-title">营养达成率雷达图</div>
+            <div class="chart-body" data-echart="renderRadar"
+                 data-chart-data='{{ radar_data | tojson }}'></div>
+        </div>
+    </div>
+
+    <!-- 评估详情 -->
+    <div class="card" style="margin-bottom:16px;">
+        <h3 class="section-title">📋 评估摘要</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">评估周期</span>
+                <span class="detail-value">{{ assessment.start_date }} 至 {{ assessment.end_date }}（{{ assessment.days }} 天）</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">日均能量</span>
+                <span class="detail-value">{{ assessment.avg_daily_nutrition.calories_kcal | round(0) }} kcal</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">饮食多样性</span>
+                <span class="detail-value">{{ assessment.diversity_score or 0 }}/100</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">食物种类</span>
+                <span class="detail-value">{{ advice_context.food_variety_count or 0 }} 种</span>
+            </div>
+        </div>
+
+        {% if assessment.gaps %}
+        <h4 class="subsection-title">⚠️ 营养缺口/过量</h4>
+        <div class="gap-list">
+            {% for g in assessment.gaps[:8] %}
+            <div class="gap-item {{ g.status }}">
+                <span class="gap-name">{{ g.nutrient }}</span>
+                <span class="gap-status">
+                    {% if g.status == 'deficient' %}不足{% elif g.status == 'excessive' %}过量{% else %}达标{% endif %}
+                </span>
+                <span class="gap-ratio">{{ (g.ratio * 100) | round(0) }}%</span>
+                <span class="gap-detail">{{ g.actual | round(1) }}{{ g.unit }} / 目标 {{ g.target | round(1) }}{{ g.unit }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert-success">✅ 各项营养素均在合理范围内</div>
+        {% endif %}
+
+        {% if assessment.recommendations %}
+        <h4 class="subsection-title">💡 基础建议</h4>
+        <ul class="rec-list">
+            {% for rec in assessment.recommendations %}
+            <li>{{ rec }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    <!-- AI 营养师建议 prompt -->
+    <div class="card">
+        <h3 class="section-title">🤖 AI 营养师建议</h3>
+        <div class="alert-info">
+            以下为基于你的饮食数据生成的营养师建议上下文。<strong>由 MCP 宿主 LLM 执行后输出个性化建议</strong>。
+        </div>
+        <details class="prompt-details">
+            <summary>查看建议 Prompt（供 LLM 执行）</summary>
+            <pre class="prompt-content">{{ advice_prompt }}</pre>
+        </details>
+
+        {% if next_meal_prompt %}
+        <details class="prompt-details">
+            <summary>查看下一餐建议 Prompt</summary>
+            <pre class="prompt-content">{{ next_meal_prompt }}</pre>
+        </details>
+        {% endif %}
+
+        <div class="context-grid">
+            <div class="context-item">
+                <span class="detail-label">平衡评分</span>
+                <span class="detail-value">{{ advice_context.balance_score or 0 }}/100</span>
+            </div>
+            <div class="context-item">
+                <span class="detail-label">多样性评分</span>
+                <span class="detail-value">{{ advice_context.diversity_score or 0 }}/100</span>
+            </div>
+            <div class="context-item">
+                <span class="detail-label">日均能量</span>
+                <span class="detail-value">{{ advice_context.avg_daily_calories or 0 }} kcal</span>
+            </div>
+            {% if advice_context.top_gaps %}
+            <div class="context-item">
+                <span class="detail-label">关键缺口</span>
+                <span class="detail-value">
+                    {% for g in advice_context.top_gaps[:3] %}{{ g.nutrient }}({{ (g.ratio*100)|round(0) }}%) {% endfor %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function renderBalanceGauge(container, data) {
+            const chart = echarts.init(container);
+            const score = data.score || 0;
+            let color = '#dc2626';
+            if (score >= 80) color = '#16a34a';
+            else if (score >= 60) color = '#f59e0b';
+            chart.setOption({
+                series: [{
+                    type: 'gauge', radius: '90%',
+                    progress: { show: true, width: 18 },
+                    axisLine: { lineStyle: { width: 18 } },
+                    axisTick: { show: false },
+                    splitLine: { length: 15, lineStyle: { width: 2, color: '#999' } },
+                    axisLabel: { distance: 25, color: '#999', fontSize: 10 },
+                    pointer: { itemStyle: { color: color } },
+                    anchor: { show: true, size: 15, itemStyle: { color: color } },
+                    detail: { valueAnimation: true, fontSize: 28, offsetCenter: [0, '30%'],
+                        formatter: '{value}', color: color },
+                    data: [{ value: score, name: '平衡评分' }]
+                }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        function renderRadar(container, data) {
+            const chart = echarts.init(container);
+            const indicators = data.indicators || [];
+            const values = data.values || [];
+            if (indicators.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-text">暂无数据</div></div>'; return; }
+            chart.setOption({
+                tooltip: {},
+                radar: { indicator: indicators, shape: 'polygon', splitArea: { show: true } },
+                series: [{ type: 'radar', data: [{ value: values, name: '达成率%' }],
+                    areaStyle: { opacity: 0.2, color: '#4f46e5' } }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+        }
+    </script>
+</div>

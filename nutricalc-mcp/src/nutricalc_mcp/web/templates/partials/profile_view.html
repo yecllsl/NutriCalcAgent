@@ -1,0 +1,66 @@
+{# partials/profile_view.html — 用户档案展示视图 #}
+<div class="card">
+    <div class="profile-header">
+        <h3 class="section-title">👤 用户档案</h3>
+        <button class="btn btn-secondary btn-sm"
+                hx-get="/partials/profile/edit" hx-target="#profile-area" hx-swap="innerHTML">
+            ✏️ 编辑
+        </button>
+    </div>
+
+    <div id="profile-area">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">年龄</span>
+                <span class="detail-value">{{ profile.age }} 岁</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">性别</span>
+                <span class="detail-value">{{ '男' if profile.gender == 'male' else '女' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">身高</span>
+                <span class="detail-value">{{ profile.height_cm }} cm</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">体重</span>
+                <span class="detail-value">{{ profile.weight_kg }} kg</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">BMI</span>
+                <span class="detail-value">
+                    {{ (profile.weight_kg / ((profile.height_cm/100)**2)) | round(1) }}
+                    {% set bmi = profile.weight_kg / ((profile.height_cm/100)**2) %}
+                    <span class="tag {% if bmi < 18.5 %}tag-warn{% elif bmi < 24 %}tag-good{% elif bmi < 28 %}tag-warn{% else %}tag-bad{% endif %}">
+                        {% if bmi < 18.5 %}偏瘦{% elif bmi < 24 %}正常{% elif bmi < 28 %}超重{% else %}肥胖{% endif %}
+                    </span>
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">活动水平</span>
+                <span class="detail-value">{{ profile.activity_level }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">生命阶段</span>
+                <span class="detail-value">{{ profile.life_stage }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">健康目标</span>
+                <span class="detail-value">
+                    {{ {'maintain':'维持体重','lose':'减脂控重','gain':'增肌增重',
+                       'control_diabetes':'控糖','control_hypertension':'控压',
+                       'control_cholesterol':'降脂','pregnancy':'孕期','lactation':'哺乳期'}.get(profile.goal, profile.goal) }}
+                </span>
+            </div>
+        </div>
+
+        {% if profile.allergies %}
+        <div class="detail-item" style="margin-top:12px;">
+            <span class="detail-label">过敏/忌口</span>
+            <span class="detail-value">
+                {% for a in profile.allergies %}<span class="food-tag">{{ a }}</span> {% endfor %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
