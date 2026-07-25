@@ -1,0 +1,104 @@
+name: Release
+
+# ──────────────────────────────────────────
+# 触发器：
+#   1. push tag v*.*.*  → 自动发布（如 v0.1.1）
+#   2. workflow_dispatch → 手动补传 / 重新发布
+# ──────────────────────────────────────────
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版本号（不含 v 前缀），如 0.1.1"
+        required: true
+        default: "0.1.1"
+
+permissions:
+  contents: write  # 创建 release 需要
+
+jobs:
+  build-release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # fetch-depth: 0 让 softprops/action-gh-release 能拿到完整提交历史以生成 release notes
+        fetch-depth: 0
+
+    - name: Extract version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "push" ]; then
+          # push tag 事件：GITHUB_REF_NAME 形如 v0.1.1
+          VERSION="${GITHUB_REF_NAME#v}"
+        else
+          # 手动触发：使用 input（同样去掉可能的 v 前缀）
+          VERSION="${{ inputs.version }}"
+          VERSION="${VERSION#v}"
+        fi
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "Release version: $VERSION"
+
+    - name: Install build tools
+      # zip / rsync / tar 在 GitHub Actions Ubuntu 镜像里已预装
+      # 显式 apt-get 兜底，避免镜像精简版缺失
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip rsync tar
+
+    - name: Build release artifacts
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+      run: bash scripts/build-release.sh "$VERSION"
+
+    - name: Verify artifacts
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        echo "Build artifacts:"
+        for f in dist/NutriCalcAgent-v${VERSION}.{zip,tar.gz}; do
+          [ -f "$f" ] || { echo "::error::missing: $f"; exit 1; }
+          size=$(du -h "$f" | cut -f1)
+          echo "  ✓ $f ($size)"
+        done
+
+    - name: Delete existing assets (allow re-upload)
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        TAG="v${VERSION}"
+        # 如果 release 不存在则跳过（首次发布场景）
+        if ! gh release view "$TAG" >/dev/null 2>&1; then
+          echo "Release $TAG does not exist yet; will be created."
+          exit 0
+        fi
+        # 逐个删除同名的旧 asset，让下一步能干净地上传
+        for ext in zip tar.gz; do
+          asset="NutriCalcAgent-v${VERSION}.${ext}"
+          if gh release view "$TAG" --json assets \
+              --jq ".assets[] | select(.name == \"$asset\") | .id" 2>/dev/null | grep -q .; then
+            echo "deleting existing asset: $asset"
+            gh release delete-asset "$TAG" "$asset" --yes
+          else
+            echo "asset not present yet: $asset"
+          fi
+        done
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: "NutriCalcAgent v${{ steps.version.outputs.version }}"
+        generate_release_notes: true
+        fail_on_unmatched_files: true
+        files: |
+          dist/NutriCalcAgent-v${{ steps.version.outputs.version }}.zip
+          dist/NutriCalcAgent-v${{ steps.version.outputs.version }}.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
