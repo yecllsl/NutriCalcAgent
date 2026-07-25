@@ -17,7 +17,7 @@ from nutricalc_mcp.food_db import get_food_db
 from nutricalc_mcp.models import NutritionFacts
 from nutricalc_mcp.knowledge_map import NUTRIENT_NAME_MAP
 from nutricalc_mcp.prompts.nutrition_analyze_prompt import (
-    NUTRITION_ESTIMATE_PROMPT, MIXED_DISH_DECOMPOSE_PROMPT, NUTRITION_SUMMARY_PROMPT,
+    NUTRITION_ESTIMATE_PROMPT, MIXED_DISH_DECOMPOSE_PROMPT,
 )
 
 
@@ -162,38 +162,3 @@ def analyze_nutrition(items: list[dict]) -> dict:
         result["decompose_prompts"] = [a["decompose_prompt"] for a in unmatched]
 
     return result
-
-
-def build_summary_prompt(
-    total_nutrition: dict,
-    meal_type: str = "加餐",
-    meal_time: str = "",
-    target_calories: float = 700,
-    target_protein: float = 22,
-) -> str:
-    """构建整餐营养汇总解读 prompt（供 LLM 解读汇总数据）
-
-    Args:
-        total_nutrition: analyze_nutrition 返回的 total_nutrition
-        meal_type: 餐次
-        meal_time: 进食时间
-        target_calories: 该餐次能量目标（RNI/3 简化）
-        target_protein: 该餐次蛋白目标
-
-    Returns:
-        summary_prompt 字符串
-    """
-    n = total_nutrition
-    return NUTRITION_SUMMARY_PROMPT.format(
-        meal_type=meal_type,
-        meal_time=meal_time or "未指定",
-        item_count=n.get("item_count", 0),
-        calories=round(n.get("calories_kcal", 0), 1),
-        protein=round(n.get("protein_g", 0), 1),
-        fat=round(n.get("fat_g", 0), 1),
-        carb=round(n.get("carbohydrate_g", 0), 1),
-        fiber=round(n.get("fiber_g", 0), 1),
-        sodium=round(n.get("sodium_mg", 0), 1),
-        target_calories=round(target_calories, 0),
-        target_protein=round(target_protein, 1),
-    )

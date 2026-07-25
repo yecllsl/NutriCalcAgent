@@ -76,23 +76,6 @@ def update_food_log(log_data: dict) -> dict:
     return storage.save_food_log(fl)
 
 
-def patch_food_log(log_id: str, patch: dict) -> dict:
-    """部分更新饮食记录（仅更新 patch 中包含的字段）
-
-    Args:
-        log_id: 记录ID
-        patch: 要更新的字段字典
-
-    Returns:
-        更新后的记录字典；若 ID 不存在返回 {error: ...}
-    """
-    storage = get_storage()
-    updated = storage.patch_food_log(log_id, patch)
-    if updated is None:
-        return {"error": f"饮食记录不存在: {log_id}"}
-    return updated.model_dump()
-
-
 def delete_food_log(log_id: str) -> dict:
     """删除饮食记录
 

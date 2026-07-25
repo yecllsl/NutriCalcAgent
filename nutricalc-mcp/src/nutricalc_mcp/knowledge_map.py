@@ -51,6 +51,18 @@ GOALS = [
     "lactation",             # 哺乳期
 ]
 
+# 健康目标中文描述（英文 goal → 中文描述，用于 UI 展示与 prompt 构造）
+GOAL_DESC = {
+    "maintain": "维持体重",
+    "lose": "减脂控重",
+    "gain": "增肌增重",
+    "control_diabetes": "控糖（糖尿病人群）",
+    "control_hypertension": "控压（高血压人群）",
+    "control_cholesterol": "降脂（高血脂人群）",
+    "pregnancy": "孕期营养",
+    "lactation": "哺乳期营养",
+}
+
 # AI 营养师人设
 PERSONAS = ["professional", "gentle", "strict"]
 

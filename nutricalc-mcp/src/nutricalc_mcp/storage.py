@@ -7,7 +7,6 @@
 设计对齐 DeepReview storage.py：
 - 数据以 JSON 文件形式存储在本地文件系统，按类型分目录管理
 - 原子写入：先写 .tmp 临时文件，再 os.replace 原子替换，防止写入中途崩溃损坏数据
-- patch 部分更新 + _deep_merge 递归合并嵌套字段
 - 文件名即 ID（{record_id}.json）
 """
 from __future__ import annotations
@@ -21,20 +20,6 @@ from typing import Optional
 from nutricalc_mcp.models import (
     FoodLog, UserProfile, BalanceAssessment, NutritionAdvice,
 )
-
-
-def _now_utc_iso() -> str:
-    """当前 UTC 时间的 ISO 字符串（用于 ID 生成与日期比较）"""
-    return datetime.now(timezone.utc).strftime("%Y%m%d")
-
-
-def generate_log_id() -> str:
-    """生成饮食记录ID：fl_YYYYMMDD_NNN
-
-    同一天内按已有文件数递增序号，避免冲突。
-    """
-    date_str = _now_utc_iso()
-    return f"fl_{date_str}"
 
 
 class Storage:
@@ -116,25 +101,6 @@ class Storage:
     def update_food_log(self, log: FoodLog) -> dict:
         """更新饮食记录（覆盖写入），语义等同 save"""
         return self.save_food_log(log)
-
-    def patch_food_log(self, log_id: str, patch: dict) -> Optional[FoodLog]:
-        """部分更新饮食记录：加载现有 → 递归合并 patch → 原子写回
-
-        Args:
-            log_id: 记录ID
-            patch: 要更新的字段字典，支持嵌套 dict 合并
-
-        Returns:
-            更新后的 FoodLog，若 ID 不存在返回 None
-        """
-        existing = self.load_food_log(log_id)
-        if existing is None:
-            return None
-        merged = _deep_merge(existing.model_dump(), patch)
-        # 重新校验，确保 meal_type 等枚举字段合法
-        updated = FoodLog.model_validate(merged)
-        self.save_food_log(updated)
-        return updated
 
     def delete_food_log(self, log_id: str) -> bool:
         """删除饮食记录文件，返回是否删除成功"""
@@ -269,18 +235,3 @@ class Storage:
         if data is None:
             return None
         return NutritionAdvice.model_validate(data)
-
-
-def _deep_merge(base: dict, patch: dict) -> dict:
-    """递归合并 patch 到 base 字典
-
-    对嵌套 dict 递归合并而非覆盖；对非 dict 值用 patch 覆盖 base。
-    用于 patch_food_log 等部分更新场景。
-    """
-    result = dict(base)
-    for key, value in patch.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = _deep_merge(result[key], value)
-        else:
-            result[key] = value
-    return result

@@ -4,7 +4,6 @@
 包含:
 - NUTRITION_ESTIMATE_PROMPT: 未命中本地库的食物/菜品营养估算 prompt
 - MIXED_DISH_DECOMPOSE_PROMPT: 混合菜拆解为食材的 prompt
-- NUTRITION_SUMMARY_PROMPT: 整餐营养汇总分析 prompt（供 LLM 解读）
 """
 
 # 未命中本地库时的营养估算 prompt
@@ -75,38 +74,4 @@ MIXED_DISH_DECOMPOSE_PROMPT = """你是一位中餐营养分析师。请将以�
 - 主料占比通常 60-80%，辅料 10-20%，调味 5-10%
 - 油脂估算：炒菜 10-15g/份，炸 15-25g/份，凉拌 5-8g/份
 - 不同地区做法差异大时，notes 中说明
-"""
-
-
-# 整餐营养汇总分析 prompt（供 LLM 解读汇总营养）
-NUTRITION_SUMMARY_PROMPT = """你是一位营养师。请基于以下整餐营养汇总数据，给出简明解读。
-
-餐次：{meal_type}
-进食时间：{meal_time}
-食物项数：{item_count}
-汇总营养（本餐实际摄入）：
-- 能量：{calories} kcal
-- 蛋白质：{protein} g
-- 脂肪：{fat} g
-- 碳水：{carb} g
-- 膳食纤维：{fiber} g
-- 钠：{sodium} mg
-
-用户单餐目标参考（基于 RNI 三等分）：
-- 能量目标：{target_calories} kcal
-- 蛋白目标：{target_protein} g
-
-请输出（JSON）：
-{{
-    "summary": "一句话总览（如 本餐能量偏高，蛋白充足）",
-    "highlights": ["亮点1", "亮点2"],
-    "concerns": ["关注点1", "关注点2"],
-    "next_meal_hint": "下一餐调整建议（一句话）"
-}}
-
-解读要点：
-- 能量/蛋白与单餐目标对比（±20% 内为合理）
-- 钠 >800mg/餐 提示偏高
-- 膳食纤维 <4g/餐 提示不足
-- 不要给医疗建议，仅营养层面
 """

@@ -21,7 +21,7 @@ from typing import Optional
 from nutricalc_mcp.models import NutritionFacts, NutritionAdvice
 from nutricalc_mcp.knowledge_map import (
     get_rni, NUTRIENT_META, NUTRIENT_NAME_MAP,
-    CHRONIC_DISEASE_TIPS, GOALS,
+    CHRONIC_DISEASE_TIPS, GOALS, GOAL_DESC,
 )
 from nutricalc_mcp.tools.crud import get_storage, load_user_profile
 from nutricalc_mcp.tools.balance_assess import (
@@ -35,25 +35,9 @@ from nutricalc_mcp.prompts.nutritionist_prompt import (
 )
 
 
-# ──────────────────────────────────────────
-# 目标描述映射（英文 goal → 中文描述）
-# ──────────────────────────────────────────
-
-_GOAL_DESC = {
-    "maintain": "维持体重",
-    "lose": "减脂控重",
-    "gain": "增肌增重",
-    "control_diabetes": "控糖（糖尿病人群）",
-    "control_hypertension": "控压（高血压人群）",
-    "control_cholesterol": "降脂（高血脂人群）",
-    "pregnancy": "孕期营养",
-    "lactation": "哺乳期营养",
-}
-
-
 def _goal_description(goal: str) -> str:
     """健康目标 → 中文描述"""
-    return _GOAL_DESC.get(goal, "维持健康")
+    return GOAL_DESC.get(goal, "维持健康")
 
 
 def _format_user_profile(profile: dict) -> str:

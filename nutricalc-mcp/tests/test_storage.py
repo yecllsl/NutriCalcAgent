@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime, timezone, timedelta
 
 from nutricalc_mcp.models import FoodLog, UserProfile
-from nutricalc_mcp.storage import Storage, _deep_merge
+from nutricalc_mcp.storage import Storage
 
 
 class TestFoodLogCRUD:
@@ -35,20 +35,6 @@ class TestFoodLogCRUD:
     def test_delete_nonexistent(self, tmp_storage):
         """删除不存在的记录返回 False"""
         assert tmp_storage.delete_food_log("fl_nonexistent") is False
-
-    def test_patch(self, tmp_storage, sample_food_log_data):
-        """部分更新（patch）记录"""
-        log = FoodLog.model_validate(sample_food_log_data)
-        tmp_storage.save_food_log(log)
-        updated = tmp_storage.patch_food_log(log.log_id, {"note": "更新后的备注"})
-        assert updated is not None
-        assert updated.note == "更新后的备注"
-        # 原有字段保持不变
-        assert updated.meal_type == "午餐"
-
-    def test_patch_nonexistent(self, tmp_storage):
-        """patch 不存在的记录返回 None"""
-        assert tmp_storage.patch_food_log("fl_nonexistent", {"note": "x"}) is None
 
 
 class TestQueryFilters:
@@ -100,19 +86,3 @@ class TestUserProfile:
     def test_load_nonexistent(self, tmp_storage):
         """加载不存在的档案返回 None"""
         assert tmp_storage.load_user_profile("nonexistent") is None
-
-
-class TestDeepMerge:
-    """递归合并工具函数"""
-
-    def test_shallow_merge(self):
-        base = {"a": 1, "b": 2}
-        patch = {"b": 3, "c": 4}
-        result = _deep_merge(base, patch)
-        assert result == {"a": 1, "b": 3, "c": 4}
-
-    def test_nested_merge(self):
-        base = {"a": {"x": 1, "y": 2}}
-        patch = {"a": {"y": 3, "z": 4}}
-        result = _deep_merge(base, patch)
-        assert result == {"a": {"x": 1, "y": 3, "z": 4}}

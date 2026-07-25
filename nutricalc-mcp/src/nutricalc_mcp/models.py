@@ -1,8 +1,7 @@
 # src/nutricalc_mcp/models.py
 """数据模型定义 - NutriCalcAgent 营养师 Agent 的核心数据结构
 
-包含: NutritionFacts, FoodItem, FoodLog, UserProfile, BalanceAssessment,
-      NutritionAdvice, QueryFilters, StatisticsResult
+包含: NutritionFacts, FoodItem, FoodLog, UserProfile, BalanceAssessment, NutritionAdvice
 
 设计原则（对齐 DeepReview）:
 - Pydantic 2 BaseModel + 嵌套模型
@@ -200,22 +199,3 @@ class NutritionAdvice(BaseModel):
     recommendations: list[str] = Field(default_factory=list, description="具体可执行建议")
     next_meal_suggestion: Optional[str] = Field(default=None, description="下一餐建议")
     caution: str = Field(default="", description="免责声明：非医疗建议，慢病请遵医嘱")
-
-
-# ──────────────────────────────────────────
-# 查询过滤 / 统计结果
-# ──────────────────────────────────────────
-
-class QueryFilters(BaseModel):
-    """饮食记录查询过滤条件"""
-    date_range: Optional[dict[str, str]] = Field(default=None, description="{'start':'YYYY-MM-DD','end':'YYYY-MM-DD'}")
-    meal_type: Optional[str] = Field(default=None, description="餐次过滤")
-    category: Optional[str] = Field(default=None, description="食物类别过滤")
-
-
-class StatisticsResult(BaseModel):
-    """统计结果"""
-    group_by: str = Field(description="分组维度")
-    items: list[dict] = Field(default_factory=list, description="分组统计列表")
-    total: int = Field(default=0, description="总数")
-    trends: dict = Field(default_factory=dict, description="时间趋势数据")

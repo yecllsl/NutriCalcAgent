@@ -5,7 +5,6 @@
 - FOOD_VISION_PROMPT: 视觉识别 prompt，供多模态 LLM 看图识别菜品/食材/份量/烹饪法
 - NUTRITION_LABEL_OCR_PROMPT: 营养标签/菜单 OCR 结构化 prompt
 - CLARIFICATION_PROMPT: 澄清提问模板，向用户确认不确定信息
-- MIXED_DISH_DECOMPOSE_PROMPT: 混合菜拆解 prompt（供营养分析阶段复用）
 """
 
 # 视觉识别 prompt：让多模态 LLM 看图识别图中所有食物
@@ -104,33 +103,4 @@ CLARIFICATION_PROMPT = """基于初步识别结果，以下信息需要用户确
 }}
 
 注意：若初步识别结果置信度都 ≥0.8 且份量明确，可返回空 questions 数组。
-"""
-
-
-# 混合菜拆解 prompt（供 nutrition_analyze 复用）
-MIXED_DISH_DECOMPOSE_PROMPT = """你是一位中餐营养分析师。请将以下混合菜/菜品拆解为主要食材，便于查表计算营养。
-
-菜名：{dish_name}
-{context_hint}
-
-请按以下 JSON 格式输出（不要输出其他内容）：
-{{
-    "is_mixed_dish": true/false,
-    "decomposition": [
-        {{
-            "ingredient": "食材名（标准名，如 猪肉(瘦)/番茄/豆腐/花生油）",
-            "amount_g": "该食材在一份菜中的估算克数",
-            "role": "主料/辅料/调味"
-        }}
-    ],
-    "cooking_method": "烹饪法",
-    "oil_estimate_g": "估算用油量（克）",
-    "notes": "拆解说明（如不同做法油脂差异）"
-}}
-
-拆解要点：
-- 一份混合菜按常见一份（约 250-300g）拆解
-- 主料占比通常 60-80%，辅料 10-20%，调味 5-10%
-- 油脂估算：炒菜 10-15g，炸 15-25g，凉拌 5-8g
-- 不同地区做法差异大时，notes 中说明
 """
